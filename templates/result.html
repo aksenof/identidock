@@ -1,0 +1,16 @@
+<html>
+	<head>
+		<title>Avatar</title>
+		<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+	</head>
+	<body>
+		<div>
+			Homepage:
+			<a href="/index">Home</a>
+		</div>
+		<hr>
+		<p>Your username: {{name}}<p>
+		<p>Your avatar: </p>
+		<img src="/static/{{name}}.png" alt="username">
+	</body>
+</html>
