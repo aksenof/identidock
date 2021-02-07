@@ -36,8 +36,9 @@ def index():  # то, что происходит в index
 @app.route('/user/<name>')
 def user(name):
     try:
-        from algorithm import result_avatar
-        result_avatar(str(name))
+        from algorithm import AvatarGenerator
+        avatar = AvatarGenerator(name)
+        avatar.save()
     except:
         return "error"
     return render_template('result.html', name=name)
