@@ -1,108 +1,36 @@
-import turtle
-import io
-import string
-import json
-from PIL import Image
-from random import randint as rand
+from PIL import Image, ImageDraw
+from colormap import colormap
+from random import choice
+import os
 
 
-# Setup
-width, height = 8, 8
-swidth, sheight = width*60, height*60
-turtle.hideturtle()
-turtle.setup(swidth, sheight)
-turtle.speed(0)
-turtle.pencolor('')
+class AvatarGenerator:
+    def __init__(self, name):
+        self.username = name
+        self.width, self.height = 500, 500  # 100x100, 200x200, 300x300, 400x400 ...
+        self.size = 50  # size of one piece
 
+    def coords(self):
+        x0_y1 = []  # [(x0, y1)]
+        y0_x1 = []  # [(y0, x1)]
+        result = []  # [(x0, y0, x1, y1)]
+        for x0 in range(0, self.width, self.size):
+            for y1 in range(self.size, self.height + self.size, self.size):
+                x0_y1.append((x0, y1))
+        for x1 in range(self.size, self.width + self.size, self.size):
+            for y0 in range(0, self.height, self.size):
+                y0_x1.append((y0, x1))
+        for index_x0y1, x0y1 in enumerate(x0_y1):
+            for index_y0x1, y0x1 in enumerate(y0_x1):
+                if index_x0y1 == index_y0x1:
+                    result.append((x0y1[0], y0x1[0], y0x1[1], x0y1[1]))
+        return result
 
-pal = [
-    "#000000",
-    "#000000",
-    "#000000",
-    "#0CAFEB",
-    "#F5D718",
-    "#EB63E2",
-    "#A1FF4A"
-]
-
-with open('map.json') as f:
-    cmap = json.load(f)
-
-
-# Avatar Generation functions
-def shift(ch, offset):
-    return string.ascii_letters[(string.ascii_letters.index(ch)+offset)%len(string.ascii_letters)]
-
-
-def pad(raw, size):
-    if len(raw) > size:
-        return raw[:size]
-    else:
-        padded = ''
-        counter = 0
-        while len(padded) < size:
-            counter = 0 if len(raw) == counter else counter
-            padded += raw[counter]
-            counter += 1
-        return padded
-
-
-def write_cmap():
-    cmap = {
-        char: rand(0, 5) for char in string.ascii_letters
-    }
-    with open('map.json', 'w') as f:
-        f.write(json.dumps(cmap))
-
-
-def generate_avatar(rawstring):
-    global width, height
-    return [
-        [
-            pal[cmap[shift(ch, x+i)]] for x, ch in enumerate(pad(rawstring, width))
-        ] for i in range(height)
-    ]
-
-
-# Avatar rendering functions
-def pixel(col):
-    turtle.fillcolor(col)
-    turtle.pencolor(col)
-    turtle.begin_fill()
-    for i in range(2):
-        turtle.forward(swidth/width)
-        turtle.right(90)
-        turtle.forward(sheight/height)
-        turtle.right(90)
-    turtle.end_fill()
-    turtle.forward(swidth/width)
-
-
-def render(asset):
-    turtle.penup()
-    turtle.goto(-swidth//2, sheight//2)
-    turtle.pendown()
-
-    for y in range(height):
-        for x in range(width):
-            pixel(asset[y][x])
-        turtle.right(90)
-        turtle.forward(sheight/height)
-        turtle.right(90)
-        turtle.forward(swidth)
-        turtle.setheading(0)
-
-
-# Image manipulation functions
-def save(filename):
-    ps = turtle.getscreen().getcanvas().postscript()
-    im = Image.open(io.BytesIO(ps.encode('utf-8')))
-    im.thumbnail((512, 512))
-    cropped = im.crop((3, 3, 480, 480)).copy()
-    cropped.save('static/{file}.png'.format(file=filename))
-
-
-def result_avatar(username):
-    avatar = generate_avatar(username)
-    render(avatar)
-    save(username)
+    def save(self):
+        if not os.path.exists('static/{file}.png'.format(file=self.username)):
+            im = Image.new('RGB', (self.width, self.height), (255, 255, 255))
+            draw = ImageDraw.Draw(im)
+            for coord in self.coords():
+                random_color = choice(colormap)
+                draw.rectangle(coord, fill=random_color)
+            im.save('static/{file}.png'.format(file=self.username), quality=100)
